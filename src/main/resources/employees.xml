@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<employees
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:noNamespaceSchemaLocation="Employee.xsd">
+    <employee id="1">
+        <name>
+            <firstName>Alex</firstName>
+            <lastName>Petrov</lastName>
+        </name>
+        <age>25</age>
+        <position>Java developer</position>
+        <department>Program development</department>
+        <salary currency="dollars">500</salary>
+    </employee>
+    
+    <employee id="2">
+        <name>
+            <firstName>Alex2</firstName>
+            <lastName>Petrov2</lastName>
+        </name>
+        <age>27</age>
+        <position>Java developer2</position>
+        <department>Program development2</department>
+        <salary currency="dollars">600</salary>
+    </employee>
+
+</employees>
