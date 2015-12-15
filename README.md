@@ -1,4 +1,3 @@
-Task:
 1.       Parse XML schema using JAXB
 
 2.       Filter data
@@ -32,6 +31,3 @@ Condition for algorithm:
 1.       Searching algorithm should be standalone for any XML schema
 
  
-Xml file you should create by yourself.
- 
-Also its preferred to use maven and github. 
