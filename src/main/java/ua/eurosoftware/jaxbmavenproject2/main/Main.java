@@ -6,12 +6,16 @@ import generated.Employees;
 import generated.Name;
 import generated.Salary;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.StringWriter;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,14 +24,59 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
-import javax.xml.bind.*;
-import javax.xml.parsers.*;
-import org.xml.sax.*;
 import ua.eurosoftware.jaxbmavenproject2.filters.EmployeeFilter;
+
 
 public class Main {
 
     private static String pathToXML = "src/main/resources/employees.xml";
+
+    HashSet<String> fieldNamesSet = new HashSet<String>();
+
+    public static StringWriter marshalling(JAXBContext jaxbContext, Employees employees) throws JAXBException {
+
+        Employee newEmployee = new Employee();
+        newEmployee.setId("3");
+        newEmployee.setAge(new BigInteger("33"));
+        newEmployee.setDepartment("QA");
+        newEmployee.setPosition("Senior QA");
+        Name name2 = new Name();
+        name2.setFirstName("Stepan");
+        name2.setLastName("Ivanov");
+        newEmployee.setName(name2);
+        Salary salary2 = new Salary();
+        salary2.setValue(new BigDecimal(1000));
+        salary2.setCurrency("dollars");
+        newEmployee.setSalary(salary2);
+
+        employees.getEmployee().add(newEmployee);
+
+        //marshalling the object to xml
+        StringWriter writer = new StringWriter();
+        Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+        jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        jaxbMarshaller.marshal(employees, writer);
+        //System.out.println(writer.toString());
+        return writer;
+    }
+
+    public static Employees unmarshalling(JAXBContext jaxbContext, StringWriter writer) throws JAXBException {
+
+        //unmarshalling the xml to object
+        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+        Employees employeesUnmarshalled = (Employees) jaxbUnmarshaller.unmarshal(new StringReader(writer.toString()));
+        return employeesUnmarshalled;
+    }
+
+    public static Employees unmarshallingXML(JAXBContext jaxbContext) throws JAXBException {
+
+        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+        File xml = new File(pathToXML);
+        Employees employeeUnmarshalled = (Employees) jaxbUnmarshaller.unmarshal(xml);
+
+        //unmarshalling the xml to object
+        return employeeUnmarshalled;
+    }
 
     public static void printEmployeeInformation(Employee employee) {
 
@@ -44,7 +93,7 @@ public class Main {
 
     public static void printEmployeesInformation(List<Employee> employeesList) {
 
-        //11. If no matches found app should show message ìAccording to searching param, no matches foundî
+        //11. If no matches found app should show message ‚ÄúAccording to searching param, no matches found‚Äù
         if (employeesList.size() == 0) {
             System.out.println("According to searching param, no matches found");
 
@@ -72,46 +121,53 @@ public class Main {
         JAXBContext jaxbContext;
 
         try {
-            jaxbContext = JAXBContext.newInstance(Employees.class);
+            /* jaxbContext = JAXBContext.newInstance(Employees.class);
 
-            // Create the XMLFilter
-            XMLFilter filter = new EmployeeFilter();
+             // Create the XMLFilter
+             XMLFilter filter = new EmployeeFilter();
 
-            // Set the parent XMLReader on the XMLFilter
-            SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-            SAXParser saxParser = saxParserFactory.newSAXParser();
-            XMLReader xmlReader = saxParser.getXMLReader();
-            filter.setParent(xmlReader);
+             // Set the parent XMLReader on the XMLFilter
+             SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+             SAXParser saxParser = saxParserFactory.newSAXParser();
+             XMLReader xmlReader = saxParser.getXMLReader();
+             filter.setParent(xmlReader);
 
-            // Set UnmarshallerHandler as ContentHandler on XMLFilter
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            UnmarshallerHandler unmarshallerHandler = jaxbUnmarshaller.getUnmarshallerHandler();
-            filter.setContentHandler(unmarshallerHandler);
+             // Set UnmarshallerHandler as ContentHandler on XMLFilter
+             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+             UnmarshallerHandler unmarshallerHandler = jaxbUnmarshaller.getUnmarshallerHandler();
+             filter.setContentHandler(unmarshallerHandler);
 
-            // Parse the XML
-            InputSource xml = new InputSource(pathToXML);
-            filter.parse(xml);
-            Employees employees = (Employees) unmarshallerHandler.getResult();
+             // Parse the XML
+             InputSource xml = new InputSource(pathToXML);
+             filter.parse(xml);
+             Employees employees = (Employees) unmarshallerHandler.getResult();
 
-            Employee newEmployee = new Employee();
-            newEmployee.setId("3");
-            newEmployee.setAge(new BigInteger("33"));
-            newEmployee.setDepartment("QA");
-            newEmployee.setPosition("Senior QA");
-            Name name2 = new Name();
-            name2.setFirstName("Stepan");
-            name2.setLastName("Ivanov");
-            newEmployee.setName(name2);
-            Salary salary2 = new Salary();
-            salary2.setValue(new BigDecimal(1000));
-            salary2.setCurrency("dollars");
-            newEmployee.setSalary(salary2);
+             Employee newEmployee = new Employee();
+             newEmployee.setId("3");
+             newEmployee.setAge(new BigInteger("33"));
+             newEmployee.setDepartment("QA");
+             newEmployee.setPosition("Senior QA");
+             Name name2 = new Name();
+             name2.setFirstName("Stepan");
+             name2.setLastName("Ivanov");
+             newEmployee.setName(name2);
+             Salary salary2 = new Salary();
+             salary2.setValue(new BigDecimal(1000));
+             salary2.setCurrency("dollars");
+             newEmployee.setSalary(salary2);
 
-            employees.getEmployee().add(newEmployee);
+             employees.getEmployee().add(newEmployee);
 
-            // Marshal the object to XML
-            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-            jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+             // Marshal the object to XML
+             Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+             jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true); */
+
+            jaxbContext = JAXBContext.newInstance(new Class[]{Employees.class});
+
+            Employees employees = unmarshallingXML(jaxbContext);
+
+            StringWriter writer = marshalling(jaxbContext, employees);
+            employees = unmarshalling(jaxbContext, writer);
 
             // 7. If searching string is empty app should show all items in XML
             if ("".equals(searchString)) {
@@ -120,7 +176,7 @@ public class Main {
                 //jaxbMarshaller.marshal(employees, System.out);
             } else {
                 // 9. App should ignore user typing errors such as: 
-                // multiply spaces between field_name and param_name, missing ì:î (f.e. ìbrand Mercedessî)
+                // multiply spaces between field_name and param_name, missing ‚Äú:‚Äù (f.e. ‚Äúbrand Mercedess‚Äù)
                 String[] words = searchString.split("\\s+|\\s*:\\s*");
                 String fieldName = null;
                 String fieldText = null;
@@ -129,8 +185,8 @@ public class Main {
                     if (!"".equals(words[i].trim().replaceAll("!|@|#|\\$|%|\\^|&|\\*", ""))) {
                         if (first == 0) {
                             //5. filter algorithm should ignore multiply punctuation, 
-                            //f.e user type ìbrand: !@#$%$%^&*Mercedess-Benzî and algorithm should ignore ì!@#$%$%^&*î all these characters 
-                            //and create search only by ìbrand: Mercedess-Benzî
+                            //f.e user type ‚Äúbrand: !@#$%$%^&*Mercedess-Benz‚Äù and algorithm should ignore ‚Äú!@#$%$%^&*‚Äù all these characters 
+                            //and create search only by ‚Äúbrand: Mercedess-Benz‚Äù
                             fieldName = words[i].trim().replaceAll("!|@|#|\\$|%|\\^|&|\\*", "");
                             first++;
                         } else {
@@ -142,7 +198,7 @@ public class Main {
                 //System.out.println("fieldName = " + fieldName);
                 //System.out.println("fieldText = " + fieldText);
                 // 10. If input string is without field_name or param_name 
-                // app should show error message ìInput string structure is incorrectî
+                // app should show error message ‚ÄúInput string structure is incorrect‚Äù
                 if ((fieldName == null) || ("".equals(fieldName))
                         || (fieldText == null) || ("".equals(fieldText))) {
                     System.out.println("Input string structure is incorrect");
@@ -158,7 +214,7 @@ public class Main {
                                 || "firstName".toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*"))
                                 && (Objects.equals(employee.getName().getFirstName().toLowerCase(), fieldText.toLowerCase())
                                 //2. param_name  can be like full parameter or a part of it. 
-                                // F.e. ìbrand: Mercedess-Benzî (field_name is brand; param_name is Mercedess-Benz) or ìbrand: Mercî
+                                // F.e. ‚Äúbrand: Mercedess-Benz‚Äù (field_name is brand; param_name is Mercedess-Benz) or ‚Äúbrand: Merc‚Äù
                                 || employee.getName().getFirstName().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
 
                             resultEmployeesList.add(employee);
@@ -189,9 +245,9 @@ public class Main {
                                 || "salary".matches(".*" + fieldName.toLowerCase() + ".*"))
                                 //If field_name is price it algorithm should search by full price. 
                                 //F.e. at schema it is row like <price>$1.567</price>, 
-                                //for getting item by this field_name user should type ìprice: 1.567î, 
-                                //otherwise if user type ìprice: 567î it should show message 
-                                //that ìAccording to searching param, no matches foundî
+                                //for getting item by this field_name user should type ‚Äúprice: 1.567‚Äù, 
+                                //otherwise if user type ‚Äúprice: 567‚Äù it should show message 
+                                //that ‚ÄúAccording to searching param, no matches found‚Äù
                                 && Objects.equals(employee.getSalary().getValue().toString(), fieldText)) {
 
                             resultEmployeesList.add(employee);
@@ -203,15 +259,9 @@ public class Main {
                 }
             }
 
-        } catch (IOException ex) {
-
         } catch (IllegalStateException ex) {
             ex.printStackTrace();
         } catch (JAXBException ex) {
-            ex.printStackTrace();
-        } catch (ParserConfigurationException ex) {
-            ex.printStackTrace();
-        } catch (SAXException ex) {
             ex.printStackTrace();
         }
     }
@@ -262,4 +312,3 @@ public class Main {
     }
 
 }
-
