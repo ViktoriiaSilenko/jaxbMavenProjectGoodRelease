@@ -1,9 +1,7 @@
 package ua.eurosoftware.jaxbmavenproject2.main;
 
-
 import generated.Employee;
 import generated.Employees;
-import generated.Name;
 import generated.Salary;
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,6 +13,7 @@ import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -24,14 +23,16 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
-import ua.eurosoftware.jaxbmavenproject2.filters.EmployeeFilter;
+import javax.xml.bind.annotation.XmlType;
 
+import ua.eurosoftware.jaxbmavenproject2.filters.EmployeeFilter;
 
 public class Main {
 
     private static String pathToXML = "src/main/resources/employees.xml";
 
-    HashSet<String> fieldNamesSet = new HashSet<String>();
+    // set of all field names 
+    private static HashSet<String> fieldNamesSet = new HashSet<String>();
 
     public static StringWriter marshalling(JAXBContext jaxbContext, Employees employees) throws JAXBException {
 
@@ -40,10 +41,8 @@ public class Main {
         newEmployee.setAge(new BigInteger("33"));
         newEmployee.setDepartment("QA");
         newEmployee.setPosition("Senior QA");
-        Name name2 = new Name();
-        name2.setFirstName("Stepan");
-        name2.setLastName("Ivanov");
-        newEmployee.setName(name2);
+        newEmployee.setFirstName("Stepan");
+        newEmployee.setLastName("Ivanov");
         Salary salary2 = new Salary();
         salary2.setValue(new BigDecimal(1000));
         salary2.setCurrency("dollars");
@@ -51,7 +50,6 @@ public class Main {
 
         employees.getEmployee().add(newEmployee);
 
-        //marshalling the object to xml
         StringWriter writer = new StringWriter();
         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
         jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
@@ -62,27 +60,24 @@ public class Main {
 
     public static Employees unmarshalling(JAXBContext jaxbContext, StringWriter writer) throws JAXBException {
 
-        //unmarshalling the xml to object
         Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
         Employees employeesUnmarshalled = (Employees) jaxbUnmarshaller.unmarshal(new StringReader(writer.toString()));
         return employeesUnmarshalled;
     }
 
+    //unmarshalling the xml to object
     public static Employees unmarshallingXML(JAXBContext jaxbContext) throws JAXBException {
 
         Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
         File xml = new File(pathToXML);
         Employees employeeUnmarshalled = (Employees) jaxbUnmarshaller.unmarshal(xml);
-
-        //unmarshalling the xml to object
         return employeeUnmarshalled;
     }
 
     public static void printEmployeeInformation(Employee employee) {
 
-        Name name = employee.getName();
-        System.out.println("first name: " + name.getFirstName());
-        System.out.println("last name: " + name.getLastName());
+        System.out.println("first name: " + employee.getFirstName());
+        System.out.println("last name: " + employee.getLastName());
         System.out.println("age: " + employee.getAge());
         System.out.println("position: " + employee.getPosition());
         System.out.println("department: " + employee.getDepartment());
@@ -94,7 +89,7 @@ public class Main {
     public static void printEmployeesInformation(List<Employee> employeesList) {
 
         //11. If no matches found app should show message “According to searching param, no matches found”
-        if (employeesList.size() == 0) {
+        if (employeesList.isEmpty()) {
             System.out.println("According to searching param, no matches found");
 
         } else {
@@ -121,7 +116,10 @@ public class Main {
         JAXBContext jaxbContext;
 
         try {
-            /* jaxbContext = JAXBContext.newInstance(Employees.class);
+            /* 
+             // It is some kind of another way :
+            
+             jaxbContext = JAXBContext.newInstance(Employees.class);
 
              // Create the XMLFilter
              XMLFilter filter = new EmployeeFilter();
@@ -167,6 +165,7 @@ public class Main {
             Employees employees = unmarshallingXML(jaxbContext);
 
             StringWriter writer = marshalling(jaxbContext, employees);
+
             employees = unmarshalling(jaxbContext, writer);
 
             // 7. If searching string is empty app should show all items in XML
@@ -206,64 +205,70 @@ public class Main {
                     List<Employee> employeesList = employees.getEmployee();
                     List<Employee> resultEmployeesList = new ArrayList<Employee>();
 
-                    for (Employee employee : employeesList) {
-                        // Employee has fields: firstName, lastName, age, position, department, salary 
+                    if (!employeesList.isEmpty()) {
 
-                        //4. filter algorithm should ignore register
-                        if ((Objects.equals("firstName".toLowerCase(), fieldName.toLowerCase())
-                                || "firstName".toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*"))
-                                && (Objects.equals(employee.getName().getFirstName().toLowerCase(), fieldText.toLowerCase())
-                                //2. param_name  can be like full parameter or a part of it. 
-                                // F.e. “brand: Mercedess-Benz” (field_name is brand; param_name is Mercedess-Benz) or “brand: Merc”
-                                || employee.getName().getFirstName().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
+                        Employee empl = employeesList.get(0);
+                        // get all field names from annotation 
+                        String[] fieldNames = empl.getClass().getAnnotation(XmlType.class).propOrder();
+                        fieldNamesSet.addAll(Arrays.asList(fieldNames));
 
-                            resultEmployeesList.add(employee);
-                        } else if ((Objects.equals("lastName".toLowerCase(), fieldName.toLowerCase())
-                                || "lastName".toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*"))
-                                && (Objects.equals(employee.getName().getLastName().toLowerCase(), fieldText.toLowerCase())
-                                || employee.getName().getLastName().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
+                        for (Employee employee : employeesList) {
 
-                            resultEmployeesList.add(employee);
-                        } else if ((Objects.equals("age", fieldName.toLowerCase())
-                                || "age".matches(".*" + fieldName.toLowerCase() + ".*"))
-                                && Objects.equals(employee.getAge().toString(), fieldText)) {
+                            //4. filter algorithm should ignore register
+                            if ((Objects.equals("firstName".toLowerCase(), fieldName.toLowerCase())
+                                    || "firstName".toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*"))
+                                    && (Objects.equals(employee.getFirstName().toLowerCase(), fieldText.toLowerCase())
+                                    //2. param_name  can be like full parameter or a part of it. 
+                                    // F.e. “brand: Mercedess-Benz” (field_name is brand; param_name is Mercedess-Benz) or “brand: Merc”
+                                    || employee.getFirstName().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
 
-                            resultEmployeesList.add(employee);
-                        } else if ((Objects.equals("position", fieldName.toLowerCase())
-                                || "position".matches(".*" + fieldName.toLowerCase() + ".*"))
-                                && (Objects.equals(employee.getPosition().toLowerCase(), fieldText.toLowerCase())
-                                || employee.getPosition().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
+                                resultEmployeesList.add(employee);
+                            } else if ((Objects.equals("lastName".toLowerCase(), fieldName.toLowerCase())
+                                    || "lastName".toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*"))
+                                    && (Objects.equals(employee.getLastName().toLowerCase(), fieldText.toLowerCase())
+                                    || employee.getLastName().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
 
-                            resultEmployeesList.add(employee);
-                        } else if ((Objects.equals("department", fieldName.toLowerCase())
-                                || "department".matches(".*" + fieldName.toLowerCase() + ".*"))
-                                && (Objects.equals(employee.getDepartment().toLowerCase(), fieldText.toLowerCase())
-                                || employee.getDepartment().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
+                                resultEmployeesList.add(employee);
+                            } else if ((Objects.equals("age", fieldName.toLowerCase())
+                                    || "age".matches(".*" + fieldName.toLowerCase() + ".*"))
+                                    && Objects.equals(employee.getAge().toString(), fieldText)) {
 
-                            resultEmployeesList.add(employee);
-                        } else if ((Objects.equals("salary", fieldName.toLowerCase())
-                                || "salary".matches(".*" + fieldName.toLowerCase() + ".*"))
-                                //If field_name is price it algorithm should search by full price. 
-                                //F.e. at schema it is row like <price>$1.567</price>, 
-                                //for getting item by this field_name user should type “price: 1.567”, 
-                                //otherwise if user type “price: 567” it should show message 
-                                //that “According to searching param, no matches found”
-                                && Objects.equals(employee.getSalary().getValue().toString(), fieldText)) {
+                                resultEmployeesList.add(employee);
+                            } else if ((Objects.equals("position", fieldName.toLowerCase())
+                                    || "position".matches(".*" + fieldName.toLowerCase() + ".*"))
+                                    && (Objects.equals(employee.getPosition().toLowerCase(), fieldText.toLowerCase())
+                                    || employee.getPosition().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
 
-                            resultEmployeesList.add(employee);
+                                resultEmployeesList.add(employee);
+                            } else if ((Objects.equals("department", fieldName.toLowerCase())
+                                    || "department".matches(".*" + fieldName.toLowerCase() + ".*"))
+                                    && (Objects.equals(employee.getDepartment().toLowerCase(), fieldText.toLowerCase())
+                                    || employee.getDepartment().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
+
+                                resultEmployeesList.add(employee);
+                            } else if ((Objects.equals("salary", fieldName.toLowerCase())
+                                    || "salary".matches(".*" + fieldName.toLowerCase() + ".*"))
+                                    //If field_name is price it algorithm should search by full price. 
+                                    //F.e. at schema it is row like <price>$1.567</price>, 
+                                    //for getting item by this field_name user should type “price: 1.567”, 
+                                    //otherwise if user type “price: 567” it should show message 
+                                    //that “According to searching param, no matches found”
+                                    && Objects.equals(employee.getSalary().getValue().toString(), fieldText)) {
+
+                                resultEmployeesList.add(employee);
+                            }
+
                         }
+                        printEmployeesInformation(resultEmployeesList);
 
                     }
 
-                    printEmployeesInformation(resultEmployeesList);
                 }
             }
-
-        } catch (IllegalStateException ex) {
-            ex.printStackTrace();
         } catch (JAXBException ex) {
             ex.printStackTrace();
         }
+
     }
 
     public static void main(String[] args) {
