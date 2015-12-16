@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -17,6 +19,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -208,54 +212,129 @@ public class Main {
                     if (!employeesList.isEmpty()) {
 
                         Employee empl = employeesList.get(0);
+
+                        // In this way I should use reflection,
+                        // because searching algorithm should be standalone for any XML schema
                         // get all field names from annotation 
                         String[] fieldNames = empl.getClass().getAnnotation(XmlType.class).propOrder();
                         fieldNamesSet.addAll(Arrays.asList(fieldNames));
 
                         for (Employee employee : employeesList) {
 
-                            //4. filter algorithm should ignore register
-                            if ((Objects.equals("firstName".toLowerCase(), fieldName.toLowerCase())
-                                    || "firstName".toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*"))
-                                    && (Objects.equals(employee.getFirstName().toLowerCase(), fieldText.toLowerCase())
-                                    //2. param_name  can be like full parameter or a part of it. 
-                                    // F.e. “brand: Mercedess-Benz” (field_name is brand; param_name is Mercedess-Benz) or “brand: Merc”
-                                    || employee.getFirstName().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
+                            /* This is also possible way, 
+                             but in this way searching algorithm is not standalone for any XML schema
+                            
+                            
+                             //4. filter algorithm should ignore register
+                             if ((Objects.equals("firstName".toLowerCase(), fieldName.toLowerCase())
+                             || "firstName".toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*"))
+                             && (Objects.equals(employee.getFirstName().toLowerCase(), fieldText.toLowerCase())
+                             //2. param_name  can be like full parameter or a part of it. 
+                             // F.e. “brand: Mercedess-Benz” (field_name is brand; param_name is Mercedess-Benz) or “brand: Merc”
+                             || employee.getFirstName().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
 
-                                resultEmployeesList.add(employee);
-                            } else if ((Objects.equals("lastName".toLowerCase(), fieldName.toLowerCase())
-                                    || "lastName".toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*"))
-                                    && (Objects.equals(employee.getLastName().toLowerCase(), fieldText.toLowerCase())
-                                    || employee.getLastName().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
+                             resultEmployeesList.add(employee);
+                             } else if ((Objects.equals("lastName".toLowerCase(), fieldName.toLowerCase())
+                             || "lastName".toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*"))
+                             && (Objects.equals(employee.getLastName().toLowerCase(), fieldText.toLowerCase())
+                             || employee.getLastName().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
 
-                                resultEmployeesList.add(employee);
-                            } else if ((Objects.equals("age", fieldName.toLowerCase())
-                                    || "age".matches(".*" + fieldName.toLowerCase() + ".*"))
-                                    && Objects.equals(employee.getAge().toString(), fieldText)) {
+                             resultEmployeesList.add(employee);
+                             } else if ((Objects.equals("age", fieldName.toLowerCase())
+                             || "age".matches(".*" + fieldName.toLowerCase() + ".*"))
+                             && Objects.equals(employee.getAge().toString(), fieldText)) {
 
-                                resultEmployeesList.add(employee);
-                            } else if ((Objects.equals("position", fieldName.toLowerCase())
-                                    || "position".matches(".*" + fieldName.toLowerCase() + ".*"))
-                                    && (Objects.equals(employee.getPosition().toLowerCase(), fieldText.toLowerCase())
-                                    || employee.getPosition().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
+                             resultEmployeesList.add(employee);
+                             } else if ((Objects.equals("position", fieldName.toLowerCase())
+                             || "position".matches(".*" + fieldName.toLowerCase() + ".*"))
+                             && (Objects.equals(employee.getPosition().toLowerCase(), fieldText.toLowerCase())
+                             || employee.getPosition().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
 
-                                resultEmployeesList.add(employee);
-                            } else if ((Objects.equals("department", fieldName.toLowerCase())
-                                    || "department".matches(".*" + fieldName.toLowerCase() + ".*"))
-                                    && (Objects.equals(employee.getDepartment().toLowerCase(), fieldText.toLowerCase())
-                                    || employee.getDepartment().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
+                             resultEmployeesList.add(employee);
+                             } else if ((Objects.equals("department", fieldName.toLowerCase())
+                             || "department".matches(".*" + fieldName.toLowerCase() + ".*"))
+                             && (Objects.equals(employee.getDepartment().toLowerCase(), fieldText.toLowerCase())
+                             || employee.getDepartment().toLowerCase().matches(".*" + fieldText.toLowerCase() + ".*"))) {
 
-                                resultEmployeesList.add(employee);
-                            } else if ((Objects.equals("salary", fieldName.toLowerCase())
-                                    || "salary".matches(".*" + fieldName.toLowerCase() + ".*"))
-                                    //If field_name is price it algorithm should search by full price. 
-                                    //F.e. at schema it is row like <price>$1.567</price>, 
-                                    //for getting item by this field_name user should type “price: 1.567”, 
-                                    //otherwise if user type “price: 567” it should show message 
-                                    //that “According to searching param, no matches found”
-                                    && Objects.equals(employee.getSalary().getValue().toString(), fieldText)) {
+                             resultEmployeesList.add(employee);
+                             } else if ((Objects.equals("salary", fieldName.toLowerCase())
+                             || "salary".matches(".*" + fieldName.toLowerCase() + ".*"))
+                             // 6. If field_name is price it algorithm should search by full price. 
+                             //F.e. at schema it is row like <price>$1.567</price>, 
+                             //for getting item by this field_name user should type “price: 1.567”, 
+                             //otherwise if user type “price: 567” it should show message 
+                             //that “According to searching param, no matches found”
+                             && Objects.equals(employee.getSalary().getValue().toString(), fieldText)) {
 
-                                resultEmployeesList.add(employee);
+                             resultEmployeesList.add(employee);
+                             } */
+                            // In this way I should use reflection (for invoking methods by its names),
+                            // because searching algorithm should be standalone for any XML schema
+                            for (String elementName : fieldNamesSet) {
+                                //4. filter algorithm should ignore register
+                                //2. param_name  can be like full parameter or a part of it. 
+                                // F.e. “brand: Mercedess-Benz” (field_name is brand; param_name is Mercedess-Benz) or “brand: Merc”
+                                if (Objects.equals(elementName.toLowerCase(), fieldName.toLowerCase())
+                                        || elementName.toLowerCase().matches(".*" + fieldName.toLowerCase() + ".*")) {
+                                    Method method = null;
+                                    try {
+                                        String methodName = "get" + elementName.substring(0, 1).toUpperCase() + elementName.substring(1);
+                                        System.out.println("methodName: " + methodName);
+                                        method = employee.getClass().getMethod(methodName);
+                                    } catch (SecurityException ex) {
+                                        ex.printStackTrace();
+                                    } catch (NoSuchMethodException ex) {
+                                        System.out.println("Error: no such method");
+                                    }
+
+                                    try {
+                                        if (method != null) {
+                                  
+                                            Object methodResult = method.invoke(employee);
+
+                                           // 6. If field_name is price it algorithm should search by full price. 
+                                            //F.e. at schema it is row like <price>$1.567</price>, 
+                                            //for getting item by this field_name user should type “price: 1.567”, 
+                                            //otherwise if user type “price: 567” it should show message 
+                                            //that “According to searching param, no matches found”
+                                            if (elementName.toLowerCase().matches(".*price.*")
+                                                    || elementName.toLowerCase().matches(".*salar.*")) {
+                                                try {
+                                                    Class salary = method.invoke(employee).getClass();
+                                                    Method methodGetValue = salary.getMethod("getValue");
+                                                    
+                                                    Object value = methodGetValue.invoke(method.invoke(employee));
+                                                    
+                                                    if (Objects.equals(value.toString(), fieldText)) {
+                                                        resultEmployeesList.add(employee);
+                                                    }
+                                                } catch (NoSuchMethodException ex) {
+                                                    System.out.println("Error: no such method");
+                                                } catch (SecurityException ex) {
+                                                    ex.printStackTrace();
+                                                }
+                                            } else if (methodResult instanceof String) {
+                                                String result = methodResult.toString().toLowerCase();
+                                                if (Objects.equals(result, fieldText.toLowerCase())
+                                                        || result.matches(".*" + fieldText.toLowerCase() + ".*")) {
+                                                    resultEmployeesList.add(employee);
+                                                }
+                                            } else if (Objects.equals(methodResult.toString(), fieldText)) {
+
+                                                resultEmployeesList.add(employee);
+                                            }
+
+                                        }
+                                    } catch (IllegalArgumentException ex) {
+                                        ex.printStackTrace();
+                                    } catch (IllegalAccessException ex) {
+                                        ex.printStackTrace();
+                                    } catch (InvocationTargetException ex) {
+                                        ex.printStackTrace();
+                                    }
+                                    
+                                }
+
                             }
 
                         }
