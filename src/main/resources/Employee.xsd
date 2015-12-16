@@ -14,14 +14,7 @@
     <xsd:element name="firstName" type="xsd:string"/>
     <xsd:element name="lastName" type="xsd:string"/>
     <xsd:element name="age" type="xsd:nonNegativeInteger"/>
-    <xsd:element name="name">
-        <xsd:complexType>
-            <xsd:sequence>
-                <xsd:element ref="firstName"/>
-                <xsd:element ref="lastName"/>
-            </xsd:sequence>
-        </xsd:complexType>
-    </xsd:element>
+
     
     <xsd:simpleType name="currencyType">  
         <xsd:restriction base="xsd:decimal">  
@@ -48,7 +41,8 @@
     <xsd:element name="employee">
         <xsd:complexType>
             <xsd:sequence>
-                <xsd:element ref="name"/>
+                <xsd:element ref="firstName"/>
+                <xsd:element ref="lastName"/>
                 <xsd:element ref="age"/>
                 <xsd:element ref="position"/>
                 <xsd:element ref="department"/>
