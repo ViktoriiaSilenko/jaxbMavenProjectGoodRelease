@@ -166,13 +166,13 @@ public class Main {
 
             StringWriter writer = marshalling(jaxbContext, employees);
 
-            employees = unmarshalling(jaxbContext, writer);
+            Employees employeesUnmamarshalled = unmarshalling(jaxbContext, writer);
 
             // 7. If searching string is empty app should show all items in XML
             if ("".equals(searchString)) {
-                printEmployeesInformation(employees.getEmployee());
+                printEmployeesInformation(employeesUnmamarshalled.getEmployee());
                 // or we can write:
-                //jaxbMarshaller.marshal(employees, System.out);
+                //jaxbMarshaller.marshal(employeesUnmamarshalled, System.out);
             } else {
                 // 9. App should ignore user typing errors such as: 
                 // multiply spaces between field_name and param_name, missing “:” (f.e. “brand Mercedess”)
@@ -202,7 +202,7 @@ public class Main {
                         || (fieldText == null) || ("".equals(fieldText))) {
                     System.out.println("Input string structure is incorrect");
                 } else {
-                    List<Employee> employeesList = employees.getEmployee();
+                    List<Employee> employeesList = employeesUnmamarshalled.getEmployee();
                     List<Employee> resultEmployeesList = new ArrayList<Employee>();
 
                     if (!employeesList.isEmpty()) {
@@ -266,7 +266,7 @@ public class Main {
                 }
             }
         } catch (JAXBException ex) {
-            ex.printStackTrace();
+            System.out.println("Error in binding java classes with XML");
         }
 
     }
